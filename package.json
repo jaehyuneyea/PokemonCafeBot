@@ -1,0 +1,21 @@
+{
+  "name": "pokemon-booking-bot",
+  "version": "1.0.0",
+  "description": "A bot to book for a spot for Pokemon Cafe",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "jaehyune",
+  "license": "ISC",
+  "dependencies": {
+    "selenium-webdriver": "^4.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "@types/selenium-webdriver": "^4.1.22",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.4.5"
+  }
+}
