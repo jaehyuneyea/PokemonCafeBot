@@ -11,6 +11,7 @@ import { Builder, Browser, By, until, WebElement } from "selenium-webdriver";
 // 7. Fill input
 // 8. Await input on access code?
 const NUM_PEOPLE = 3;
+const ENVIRONMENT = "DEV" : "PROD";
 
 async function run() {
   const driver = await new Builder().forBrowser(Browser.CHROME).build();
@@ -30,20 +31,39 @@ async function run() {
       until.elementLocated(By.xpath(`//*[contains(text(), "次の月を見る")]`)),
       1000
     );
+    let available = [];
+    let date;
+    // const dayInterval = setInterval(async () => {
+    //   await driver
+    //   .findElement(By.xpath(`//*[contains(text(), "次の月を見る")]`))
+    //   .click();
+
+    // available = await driver.findElements(
+    //   By.xpath('//li[@class="calendar-day-cell available"]') // TODO: Change to available
+    // );
+
+    // if (available.length !== 0) {
+    //   clearInterval(dayInterval);
+    //   console.log("refreshed");
+    // }
+    // }, 1000);
     await driver
       .findElement(By.xpath(`//*[contains(text(), "次の月を見る")]`))
       .click();
 
-    let available = [];
-    let date;
+    // while (available.length === 0) {
+
     available = await driver.findElements(
       By.xpath('//li[@class="calendar-day-cell not-available"]') // TODO: Change to available
     );
+
+    // if (available.length === 0) {
+    //   driver.navigate().refresh();
+    //   console.log("refreshed");
+    // }
+    // }
     let i = 0;
     let c = true;
-    if (available.length === 0) {
-      driver.navigate().refresh();
-    }
     while (i < available.length && c) {
       const text = await available[i].getText();
       if (text.includes("15")) {
@@ -68,6 +88,7 @@ async function run() {
     let openTimes: WebElement[] = await driver.findElements(
       By.xpath('//div[@class="level full"]')
     ); // TODO: Change to available after finding the value
+
     // priority for seating A
     let j = 0;
     if (openTimes.length === 0) {
