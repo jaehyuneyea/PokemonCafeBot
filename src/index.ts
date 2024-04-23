@@ -11,106 +11,147 @@ import { Builder, Browser, By, until, WebElement } from "selenium-webdriver";
 // 7. Fill input
 // 8. Await input on access code?
 const NUM_PEOPLE = 3;
-const ENVIRONMENT = "DEV" : "PROD";
 
 async function run() {
   const driver = await new Builder().forBrowser(Browser.CHROME).build();
   try {
     await driver.get("https://reserve.pokemon-cafe.jp/reserve/step1");
-    // calendar page
-    await driver.wait(
-      until.elementLocated(By.xpath("//select[@name='guest']")),
-      1000
-    );
-    await driver.findElement(By.xpath("//select[@name='guest']")).click();
-    await driver
-      .findElement(By.xpath(`//option[@value=${NUM_PEOPLE}]`))
-      .click();
 
-    await driver.wait(
-      until.elementLocated(By.xpath(`//*[contains(text(), "次の月を見る")]`)),
-      1000
-    );
+    ///////////////////////////////////////////////////
+    ///////////////// CALENDAR PAGE ///////////////////
+    ///////////////////////////////////////////////////
+
     let available = [];
     let date;
-    // const dayInterval = setInterval(async () => {
-    //   await driver
-    //   .findElement(By.xpath(`//*[contains(text(), "次の月を見る")]`))
-    //   .click();
-
-    // available = await driver.findElements(
-    //   By.xpath('//li[@class="calendar-day-cell available"]') // TODO: Change to available
-    // );
-
-    // if (available.length !== 0) {
-    //   clearInterval(dayInterval);
-    //   console.log("refreshed");
-    // }
-    // }, 1000);
     await driver
-      .findElement(By.xpath(`//*[contains(text(), "次の月を見る")]`))
-      .click();
+      .wait(until.elementLocated(By.xpath("//select[@name='guest']")), 1000)
+      .then(async () => {
+        const dayInterval = setInterval(async () => {
+          console.log("checking for available dates");
 
-    // while (available.length === 0) {
+          await driver.findElement(By.xpath("//select[@name='guest']")).click();
+          await driver
+            .findElement(By.xpath(`//option[@value=${NUM_PEOPLE}]`))
+            .click();
+          console.log("selected nnum people");
+          await driver
+            .wait(
+              until.elementLocated(
+                By.xpath(`//*[contains(text(), "次の月を見る")]`)
+              ),
+              1000
+            )
+            .click()
+            .then(async () => {
+              console.log("found next month");
+              available = await driver.findElements(
+                By.className("calendar-day-cell")
+              );
+              console.log(available.length);
+              if (available.length !== 0) {
+                clearInterval(dayInterval);
+              } else {
+                console.log("no availability found! Refreshing");
+                driver.navigate().refresh();
+              }
+              let i = 0;
+              let c = true;
+              while (i < available.length && c) {
+                const text = await available[i].getText();
+                if (text.includes("15")) {
+                  date = 15;
+                  c = false;
+                } else if (text.includes("16")) {
+                  date = 16;
+                  c = false;
+                } else if (text.includes("17")) {
+                  date = 17;
+                  c = false;
+                }
+                i++;
+                console.log(text);
+                console.log(date);
+              }
+              await driver
+                .findElement(By.xpath(`//*[contains(text(), ${date})]`))
+                .click();
+              await driver.findElement(By.id("submit_button")).click();
 
-    available = await driver.findElements(
-      By.xpath('//li[@class="calendar-day-cell not-available"]') // TODO: Change to available
-    );
+              ///////////////////////////////////////////////////
+              ///////////////// TIME SELECT PAGE ////////////////
+              ///////////////////////////////////////////////////
+              let openTimes: WebElement[] =[];
+              await driver.wait(
+                until.elementLocated(By.className("time-cell")),
+                1000
+              );
+              // priority for seating A
+              let j = 0;
+              const timeInterval = setInterval(async () => {
+                console.log("checking for available times");
+                await driver
+                  .findElements(By.xpath('//a[@class="level post-link"]'))
+                  .then(async (times) => {
+                    openTimes = times;
+                    console.log(times);
+                    if (openTimes.length !== 0) {
+                      clearInterval(timeInterval);
+                    } else {
+                      console.log("no availability found! Refreshing");
+                      driver.navigate().refresh();
+                    }
+                    console.log(openTimes.length);
+                  });
+              }, 1000);
+              while (j < openTimes.length && c) {
+                const text = await openTimes[j].getText();
+                if (text.includes("A")) {
+                  openTimes.push(openTimes[j]);
+                  c = false;
+                } else if (text.includes("C")) {
+                  openTimes.push(openTimes[j]);
+                  c = false;
+                } else if (text.includes("B")) {
+                  openTimes.push(openTimes[j]);
+                  c = false;
+                }
+                console.log(text);
+                j++;
+              }
+              await openTimes[0].click().then(async () => {
+                ///////////////////////////////////////////////////
+                ///////////////// INPUT PAGE //////////////////////
+                ///////////////////////////////////////////////////
 
-    // if (available.length === 0) {
-    //   driver.navigate().refresh();
-    //   console.log("refreshed");
-    // }
-    // }
-    let i = 0;
-    let c = true;
-    while (i < available.length && c) {
-      const text = await available[i].getText();
-      if (text.includes("15")) {
-        date = 15;
-        c = false;
-      } else if (text.includes("16")) {
-        date = 16;
-        c = false;
-      } else if (text.includes("17")) {
-        date = 17;
-        c = false;
-      }
-      i++;
-    }
-    await driver
-      .findElement(By.xpath(`//*[contains(text(), ${date})]`))
-      .click();
-    await driver.findElement(By.id("submit_button")).click();
+                await driver
+                  .wait(until.elementLocated(By.id("name")), 1000)
+                  .then(async () => {
+                    await driver
+                      .findElement(By.id("name"))
+                      .sendKeys("Jae Hyune Yea");
+                    await driver
+                      .findElement(By.id("name_kana"))
+                      .sendKeys("Jae Hyune Yea");
+                    await driver
+                      .findElement(By.id("phone_number"))
+                      .sendKeys("7782313154");
+                    await driver
+                      .findElement(By.id("email"))
+                      .sendKeys("jaehyune.yea@gmail.com");
+                    await driver
+                      .findElement(By.xpath("//input[@name='commit']"))
+                      .click();
 
-    // time select page
-    await driver.wait(until.elementLocated(By.className("time-cell")), 1000);
-    let openTimes: WebElement[] = await driver.findElements(
-      By.xpath('//div[@class="level full"]')
-    ); // TODO: Change to available after finding the value
+                    /////////////////////////////////////////////////
+                    ///////////////// CONFIRM PAGE //////////////////
+                    /////////////////////////////////////////////////
 
-    // priority for seating A
-    let j = 0;
-    if (openTimes.length === 0) {
-      driver.navigate().refresh();
-    }
-    while (j < openTimes.length && c) {
-      const text = await openTimes[j].getText();
-      if (text.includes("A")) {
-        await openTimes[j].click();
-        c = false;
-      } else if (text.includes("C")) {
-        await openTimes[j].click();
-        c = false;
-      } else if (text.includes("B")) {
-        await openTimes[j].click();
-        c = false;
-      }
-      console.log(text);
-      j++;
-    }
-
-    // if the list is empty, refresh
+                    // if the list is empty, refresh
+                  });
+              });
+            });
+        }, 10000);
+      });
   } catch {
     console.log("Error");
   } finally {
